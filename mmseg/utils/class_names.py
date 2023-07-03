@@ -435,7 +435,8 @@ dataset_aliases = {
     'stare': ['stare', 'STARE'],
     'lip': ['LIP', 'lip'],
     'mapillary_v1': ['mapillary_v1'],
-    'mapillary_v2': ['mapillary_v2']
+    'mapillary_v2': ['mapillary_v2'],
+    'psfh':['psfh', 'PSFH']
 }
 
 
@@ -471,3 +472,15 @@ def get_palette(dataset):
     else:
         raise TypeError(f'dataset must a str, but got {type(dataset)}')
     return labels
+
+
+def psfh_classes():
+    """psfh class names for external use."""
+    return [
+        'background', 'ps', 'fh'
+    ]
+
+
+def psfh_palette():
+    """STARE palette for external use."""
+    return [[120, 120, 120], [6, 230, 230], [230, 230, 6]]
