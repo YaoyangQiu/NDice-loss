@@ -7,6 +7,7 @@ import torch.nn.functional as F
 
 from mmseg.registry import MODELS
 from .utils import get_class_weight, weighted_loss
+from .auto_weighted_ce_loss import one_hot2weight_s
 
 
 @weighted_loss
@@ -42,7 +43,7 @@ def binary_dice_loss(pred, target, valid_mask, smooth=1, exponent=2, **kwards):
     valid_mask = valid_mask.reshape(valid_mask.shape[0], -1)
 
     num = torch.sum(torch.mul(pred, target) * valid_mask, dim=1) * 2 + smooth
-    den = torch.sum(pred.pow(exponent) + target.pow(exponent), dim=1) + smooth
+    den = torch.sum(pred.pow(exponent) * valid_mask + target.pow(exponent) * valid_mask, dim=1) + smooth
 
     return 1 - num / den
 
@@ -76,6 +77,7 @@ class DiceLoss(nn.Module):
                  exponent=2,
                  reduction='mean',
                  class_weight=None,
+                 pixel_weight=None,
                  loss_weight=1.0,
                  ignore_index=255,
                  loss_name='loss_dice',
@@ -88,6 +90,8 @@ class DiceLoss(nn.Module):
         self.loss_weight = loss_weight
         self.ignore_index = ignore_index
         self._loss_name = loss_name
+        assert pixel_weight in (None, 'neighbor_s')
+        self.pixel_weight = pixel_weight
 
     def forward(self,
                 pred,
@@ -108,7 +112,9 @@ class DiceLoss(nn.Module):
         one_hot_target = F.one_hot(
             torch.clamp(target.long(), 0, num_classes - 1),
             num_classes=num_classes)
-        valid_mask = (target != self.ignore_index).long()
+        valid_mask = (target != self.ignore_index).float()
+        if self.pixel_weight == 'neighbor_s':
+            valid_mask *= one_hot2weight_s(torch.permute(one_hot_target, [0, 3, 1, 2]))
 
         loss = self.loss_weight * dice_loss(
             pred,
