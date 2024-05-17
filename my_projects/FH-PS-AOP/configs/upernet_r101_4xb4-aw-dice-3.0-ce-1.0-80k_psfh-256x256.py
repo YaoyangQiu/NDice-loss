@@ -1,8 +1,8 @@
 _base_ = [
-    r'C:\Users\qiuyaoyang\PycharmProjects\mmsegmentation\configs\_base_\models\upernet_r50.py',
-    r'C:\Users\qiuyaoyang\PycharmProjects\mmsegmentation\my_projects\FH-PS-AOP\configs\dataset.py',
-    r'C:\Users\qiuyaoyang\PycharmProjects\mmsegmentation\configs\_base_\schedules\schedule_160k.py',
-    r'C:\Users\qiuyaoyang\PycharmProjects\mmsegmentation\configs\_base_\default_runtime.py'
+    r'..\..\..\configs\_base_\models\upernet_r50.py',
+    r'dataset.py',
+    r'..\..\..\configs\_base_\schedules\schedule_80k.py',
+    r'..\..\..\configs\_base_\default_runtime.py'
 ]
 crop_size = (256, 256)
 norm_cfg = dict(type='SyncBN', requires_grad=True)
@@ -34,9 +34,14 @@ model = dict(
         contract_dilation=True),
     decode_head=dict(
         num_classes=3,
+        loss_decode=[
+            dict(type='DiceLoss', loss_weight=3., pixel_weight='neighbor_s'),
+            dict(type='AutoWeightedCELoss', class_weight=None, boundary_weight='neighbor_s', loss_weight=1.)]
         ),
     auxiliary_head=dict(
-        num_classes=3),
+        num_classes=3,
+        loss_decode=dict(type='AutoWeightedCELoss', class_weight=None, boundary_weight='neighbor_s', loss_weight=0.4),
+    ),
 )
 train_dataloader = dict(
     batch_size=4,

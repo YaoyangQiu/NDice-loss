@@ -19,11 +19,11 @@ for i in cases:
     img = sitk.ReadImage(os.path.join(out_img_pth.replace('png', 'mha'), i))
     img = sitk.GetArrayFromImage(img)
     img = np.transpose(img, (1, 2, 0))
-    # cv2.imwrite(os.path.join(out_img_pth, i.replace('mha', 'png')), img)
-    # label = sitk.ReadImage(os.path.join(out_label_pth.replace('png', 'mha'), i))
-    # label = sitk.GetArrayFromImage(label)
-    # assert label.max() <= 2
-    # cv2.imwrite(os.path.join(out_label_pth, i.replace('mha', 'png')), label)
+    cv2.imwrite(os.path.join(out_img_pth, i.replace('mha', 'png')), img)
+    label = sitk.ReadImage(os.path.join(out_label_pth.replace('png', 'mha'), i))
+    label = sitk.GetArrayFromImage(label)
+    assert label.max() <= 2
+    cv2.imwrite(os.path.join(out_label_pth, i.replace('mha', 'png')), label)
     img = img[:, :, 0]
     img[img > 0] = 255
     cv2.imwrite(os.path.join(visual_pth, i.replace('mha', 'png')), img)

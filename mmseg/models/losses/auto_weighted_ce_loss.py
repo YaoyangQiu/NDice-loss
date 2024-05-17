@@ -23,14 +23,14 @@ def one_hot2weight(seg, r=5):
     seg = seg.reshape((-1, 1, w, h))
     seg_reverse = 1 - seg
     seg_reverse = seg_reverse.type(torch.float32)
-    out = torch.zeros((b, w, h), device='cuda:0')
+    out = torch.zeros((b, w, h), device=seg.device)
     for i in range(1, r + 1):
-        weight = torch.ones([1, 1, 2 ** i + 1, 2 ** i + 1], dtype=torch.float32, device='cuda:0')
-        res = F.conv2d(seg_reverse, weight, padding=2**(i-1))
-        res = res / ((2 ** i + 1)**2 - 1)
-        res[seg == 0] = 0
-        res = torch.sum(res.reshape((b, c, w, h)), dim=1)
-        out = out + res
+        kernel = torch.ones([1, 1, 2 ** i + 1, 2 ** i + 1], dtype=torch.float32, device=seg.device)
+        weight = F.conv2d(seg_reverse, kernel, padding=2**(i-1)) - seg_reverse
+        weight = weight / ((2 ** i + 1)**2 - 1)
+        weight[seg == 0] = 0
+        weight = torch.sum(weight.reshape((b, c, w, h)), dim=1)
+        out = out + weight
     out = out + 1
     return out
 
@@ -153,6 +153,7 @@ class AutoWeightedCELoss(nn.Module):
                  boundary_weight='neighbor',
                  loss_weight=1.0,
                  loss_name='loss_auto_weighted_ce',
+                 use_sigmoid=None,
                  avg_non_ignore=False):
         super().__init__()
         self.reduction = reduction
